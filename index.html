@@ -167,6 +167,19 @@ body {
 .title-list li[data-rank="5"] .label { color: #d4a647; }
 .title-list li[data-rank="6"] .label { color: #e89035; }
 .title-list li[data-rank="7"] .label { color: #f5e9d3; text-shadow: 0 0 8px rgba(245, 233, 211, 0.4); }
+.title-list li[data-rank="8"] .label { color: #c0c0c0; text-shadow: 0 0 6px rgba(192, 192, 192, 0.5); }
+/* Phase 1.5c Day 3: 称号アイコン + ランキング称号色 */
+.title-list .icon { display: inline-block; width: 22px; text-align: center; margin-right: 6px; font-size: 15px; }
+.title-list li[data-rank="0"] .icon { filter: sepia(0.3); }
+.ranking-table .title-cell { font-size: 11px; opacity: 0.95; font-weight: 600; }
+.ranking-table .title-cell[data-rank="0"] { color: #a07a4a; }
+.ranking-table .title-cell[data-rank="1"] { color: #5a9be8; }
+.ranking-table .title-cell[data-rank="2"] { color: #d05b4a; }
+.ranking-table .title-cell[data-rank="3"] { color: #a368c8; }
+.ranking-table .title-cell[data-rank="4"] { color: #3eb56a; }
+.ranking-table .title-cell[data-rank="5"] { color: #d4a647; }
+.ranking-table .title-cell[data-rank="6"] { color: #e89035; }
+.ranking-table .title-cell[data-rank="7"] { color: #f5e9d3; text-shadow: 0 0 4px rgba(245, 233, 211, 0.4); }
 .next-title-progress { margin-top: 10px; padding: 12px 14px; background: rgba(212, 166, 71, 0.06); border: 1px dashed rgba(212, 166, 71, 0.3); border-radius: 8px; font-size: 12.5px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .next-title-progress.cleared { background: rgba(212, 166, 71, 0.12); border-style: solid; }
 .next-title-progress .label { opacity: 0.7; }
@@ -279,7 +292,7 @@ body {
   </div>
 
   <div class="footer">
-    LOG POSE v1 ｜ Phase 1.5a (2026/05)<br>
+    LOG POSE v1 ｜ Phase 1.5c (2026/05)<br>
     © 株式会社レジェンドリーム
   </div>
 </div>
@@ -295,15 +308,15 @@ body {
 
 <script>
 const TITLES = [
-  { min: 0,   label: 'タル',           desc: '入社＆研修中・まだ現場前' },
-  { min: 5,   label: 'イーストブルー', desc: '個人月収20万・1名教育' },
-  { min: 15,  label: 'レッドライン',   desc: '個人月収50万・4名教育' },
-  { min: 30,  label: 'グランドライン', desc: 'チーム月収100万・8名教育' },
-  { min: 60,  label: '新世界',         desc: 'チーム月収200万・12名教育' },
-  { min: 100, label: '七武海',         desc: 'チーム月収300万・20名教育' },
-  { min: 180, label: '最悪の世代',     desc: 'チーム月収500万・40名教育' },
-  { min: 350, label: '四皇',           desc: 'チーム月収1,000万・最終' },
-  { min: -1,  label: '???',            desc: '隠れミッション・四皇の先', hidden: true }
+  { min: 0,   label: 'タル',           desc: '入社＆研修中・まだ現場前',     icon: '🛢️' },
+  { min: 5,   label: 'イーストブルー', desc: '個人月収20万・1名教育',         icon: '🌊' },
+  { min: 15,  label: 'レッドライン',   desc: '個人月収50万・4名教育',         icon: '🏔️' },
+  { min: 30,  label: 'グランドライン', desc: 'チーム月収100万・8名教育',     icon: '⚓' },
+  { min: 60,  label: '新世界',         desc: 'チーム月収200万・12名教育',     icon: '🌅' },
+  { min: 100, label: '七武海',         desc: 'チーム月収300万・20名教育',     icon: '⚔️' },
+  { min: 180, label: '最悪の世代',     desc: 'チーム月収500万・40名教育',     icon: '🏴‍☠️' },
+  { min: 350, label: '四皇',           desc: 'チーム月収1,000万・最終',       icon: '👑' },
+  { min: -1,  label: '???',            desc: '隠れミッション・四皇の先',     icon: '✨', hidden: true }
 ];
 
 const API_BASE = 'https://script.google.com/macros/s/AKfycbzWaknITcn8T7hpuwRlDBLBF5zo8SVq3pRyWMERxvdv4yRQYXcscUlti3eu1yZqVzXf8Q/exec';
@@ -311,7 +324,7 @@ const API_BASE = 'https://script.google.com/macros/s/AKfycbzWaknITcn8T7hpuwRlDBL
 function renderTitles() {
   document.getElementById('titles').innerHTML = TITLES.map((t, i) => `
     <li onclick="openModal(${i})" data-hidden="${t.hidden ? '1' : ''}" data-rank="${i}">
-      <span class="label ${t.hidden ? 'hidden' : ''}">${t.label}</span>
+      <span class="label ${t.hidden ? 'hidden' : ''}"><span class="icon">${t.icon || ''}</span>${t.label}</span>
       <span class="desc">${t.desc}</span>
     </li>
   `).join('');
@@ -647,11 +660,13 @@ function renderRanking(ranking) {
   const optedOut = isOptedOut();
   const rows = ranking.map(r => {
     const isMe = !optedOut && my && r.nickname === my;
+    const rankIdx = TITLES.findIndex(t => t.label === r.title);
+    const icon = rankIdx >= 0 ? (TITLES[rankIdx].icon || '') : '';
     return `
     <tr class="${isMe ? 'self' : ''}">
       <td class="rank">${r.rank}</td>
       <td class="nickname ${isMe ? 'self' : ''}">${r.nickname}${isMe ? ' ⚓' : ''}</td>
-      <td class="title-cell">${r.title}</td>
+      <td class="title-cell" data-rank="${rankIdx >= 0 ? rankIdx : ''}">${icon} ${r.title}</td>
       <td>${r.apoTotal}</td>
       <td>${(r.xpMonthly || 0).toLocaleString()}</td>
     </tr>`;
