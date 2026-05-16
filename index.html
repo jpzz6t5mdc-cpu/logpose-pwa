@@ -158,6 +158,43 @@ body {
 .chart-wrap { padding: 8px 4px 0; }
 .chart-wrap svg { width: 100%; height: auto; }
 .chart-note { margin-top: 8px; font-size: 10.5px; opacity: 0.5; text-align: center; }
+/* Phase 1.5c Day 1: 称号カラー / 次称号距離 / streak / 隠し称号 / opt-out / 過去自分比較 */
+.title-list li[data-rank="0"] .label { color: #a07a4a; }
+.title-list li[data-rank="1"] .label { color: #5a9be8; }
+.title-list li[data-rank="2"] .label { color: #d05b4a; }
+.title-list li[data-rank="3"] .label { color: #a368c8; }
+.title-list li[data-rank="4"] .label { color: #3eb56a; }
+.title-list li[data-rank="5"] .label { color: #d4a647; }
+.title-list li[data-rank="6"] .label { color: #e89035; }
+.title-list li[data-rank="7"] .label { color: #f5e9d3; text-shadow: 0 0 8px rgba(245, 233, 211, 0.4); }
+.next-title-progress { margin-top: 10px; padding: 12px 14px; background: rgba(212, 166, 71, 0.06); border: 1px dashed rgba(212, 166, 71, 0.3); border-radius: 8px; font-size: 12.5px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.next-title-progress.cleared { background: rgba(212, 166, 71, 0.12); border-style: solid; }
+.next-title-progress .label { opacity: 0.7; }
+.next-title-progress .value { color: #d4a647; font-weight: 700; font-size: 14px; }
+.streak-leaders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+.streak-cell { background: rgba(212, 166, 71, 0.06); border: 1px solid rgba(212, 166, 71, 0.18); border-radius: 8px; padding: 12px 6px; text-align: center; }
+.streak-cell .rank { font-size: 18px; font-weight: 900; }
+.streak-cell.rank-1 .rank { color: #d4a647; }
+.streak-cell.rank-2 .rank { color: #c0c0c0; }
+.streak-cell.rank-3 .rank { color: #cd7f32; }
+.streak-cell .nickname { font-size: 12px; color: #d4a647; margin: 6px 0 4px; font-weight: 700; }
+.streak-cell .days { font-size: 11px; opacity: 0.7; }
+.hidden-achievements { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.achievement-badge { padding: 6px 10px; border-radius: 14px; font-size: 11px; background: rgba(212, 166, 71, 0.1); border: 1px solid rgba(212, 166, 71, 0.3); color: #d4a647; }
+.achievement-badge.locked { background: rgba(245, 233, 211, 0.04); border-color: rgba(245, 233, 211, 0.1); color: rgba(245, 233, 211, 0.4); }
+.achievement-list { list-style: none; padding: 0; }
+.achievement-list li { padding: 8px 10px; font-size: 12px; background: rgba(245, 233, 211, 0.04); border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+.achievement-list .ach-name { color: #d4a647; font-weight: 700; }
+.achievement-list .ach-count { opacity: 0.7; font-size: 11px; }
+.compare-bar { margin-top: 10px; padding: 12px 14px; background: rgba(212, 166, 71, 0.04); border-radius: 8px; font-size: 12px; line-height: 1.7; }
+.compare-bar .diff-up { color: #3eb56a; font-weight: 700; }
+.compare-bar .diff-down { color: #d05b4a; font-weight: 700; }
+.compare-bar .diff-same { opacity: 0.6; }
+.opt-out-bar { margin-top: 10px; font-size: 11.5px; display: flex; align-items: center; gap: 8px; opacity: 0.7; }
+.opt-out-bar input { cursor: pointer; }
+.opt-out-bar label { cursor: pointer; }
+.endowed-banner { background: linear-gradient(90deg, rgba(212, 166, 71, 0.18), rgba(212, 166, 71, 0.06)); border-left: 3px solid #d4a647; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; border-radius: 0 8px 8px 0; }
+.endowed-banner b { color: #d4a647; }
 </style>
 </head>
 <body>
@@ -174,9 +211,16 @@ body {
     <button class="change-btn" onclick="changeMyNickname()">変更</button>
   </div>
 
+  <div id="endowed-banner-container"></div>
+
   <div class="notice">
     📍 個人の XP / 称号は LINE で「<b>XP</b>」と送って確認<br>
     📍 ランキング表示名は「<b>あだ名 〇〇</b>」で変更
+  </div>
+
+  <div class="opt-out-bar">
+    <input type="checkbox" id="opt-out-toggle" onchange="toggleOptOut()">
+    <label for="opt-out-toggle">海賊番付で自分の行を強調表示しない（autonomy 設定）</label>
   </div>
 
   <div class="section">
@@ -194,8 +238,16 @@ body {
   </div>
 
   <div class="section">
+    <h2>🔥 連続入力リーダー（streak top 3）</h2>
+    <div id="streak-leaders-container">
+      <div class="loading">…</div>
+    </div>
+  </div>
+
+  <div class="section">
     <h2>📜 称号体系（9段階）</h2>
     <ul class="title-list" id="titles"></ul>
+    <div id="next-title-container"></div>
   </div>
 
   <div class="section">
@@ -208,12 +260,20 @@ body {
     <div id="ranking-container">
       <div class="loading">航海日誌を読み込み中…</div>
     </div>
+    <div id="compare-container"></div>
     <button class="refresh-btn" onclick="fetchAll()">🔄 全体更新</button>
   </div>
 
   <div class="section">
     <h2>📈 全体推移（直近6ヶ月）</h2>
     <div id="trend-chart">
+      <div class="loading">…</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🎖️ 隠し称号（イースターエッグ）</h2>
+    <div id="hidden-achievements-container">
       <div class="loading">…</div>
     </div>
   </div>
@@ -246,15 +306,161 @@ const TITLES = [
   { min: -1,  label: '???',            desc: '隠れミッション・四皇の先', hidden: true }
 ];
 
-const API_BASE = 'https://script.google.com/macros/s/AKfycbwnnnJtbZ2BVr_FLN_D8zOPbLi2su1WoNCikWNuJPT8I7cpEvI3eSZbfDbM6yY8Db8awA/exec';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbzWaknITcn8T7hpuwRlDBLBF5zo8SVq3pRyWMERxvdv4yRQYXcscUlti3eu1yZqVzXf8Q/exec';
 
 function renderTitles() {
   document.getElementById('titles').innerHTML = TITLES.map((t, i) => `
-    <li onclick="openModal(${i})" data-hidden="${t.hidden ? '1' : ''}">
+    <li onclick="openModal(${i})" data-hidden="${t.hidden ? '1' : ''}" data-rank="${i}">
       <span class="label ${t.hidden ? 'hidden' : ''}">${t.label}</span>
       <span class="desc">${t.desc}</span>
     </li>
   `).join('');
+}
+
+// Phase 1.5c: Day 1 拡張機能群
+const HIDDEN_LIST = [
+  { id: 'first_voyage', label: '初航海者', desc: 'はじめての PAK 入力' },
+  { id: 'night_sailor', label: '夜の航海士', desc: '22時以降の入力 5回' },
+  { id: 'early_bird', label: '早起き船員', desc: '6時前の入力 5回' },
+  { id: 'seven_seas', label: '七つの海制覇', desc: '単月で P+A+K 合計 100以上' },
+  { id: 'mystery', label: '???', desc: '隠れミッション・四皇の先' },
+];
+
+function toggleOptOut() {
+  const checked = document.getElementById('opt-out-toggle').checked;
+  localStorage.setItem('logpose_opt_out_highlight', checked ? '1' : '0');
+  fetchRanking();
+}
+
+function isOptedOut() {
+  return localStorage.getItem('logpose_opt_out_highlight') === '1';
+}
+
+function applyEndowedSilently() {
+  fetch(`${API_BASE}?path=apply_endowed`, { cache: 'no-store' }).catch(() => {});
+}
+
+async function fetchStreakLeaders() {
+  const container = document.getElementById('streak-leaders-container');
+  try {
+    const res = await fetch(`${API_BASE}?path=streak_leaders`, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    const cells = (data.leaders || []).map((l, i) => `
+      <div class="streak-cell rank-${i + 1}">
+        <div class="rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</div>
+        <div class="nickname">${l.nickname}</div>
+        <div class="days">${l.streak}日連続</div>
+      </div>
+    `).join('');
+    container.innerHTML = `<div class="streak-leaders">${cells}</div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="error">⚠️ ${e.message}</div>`;
+  }
+}
+
+async function fetchHiddenUnlocks() {
+  const container = document.getElementById('hidden-achievements-container');
+  try {
+    const res = await fetch(`${API_BASE}?path=hidden_unlocks`, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    const unlocks = data.unlocks || [];
+    const my = getMyNickname();
+    const myAcquired = (unlocks.find(u => u.nickname === my) || { acquired: [] }).acquired;
+    const counts = {};
+    unlocks.forEach(u => u.acquired.forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
+    const rows = HIDDEN_LIST.map(ach => {
+      const c = counts[ach.id] || 0;
+      const mine = myAcquired.includes(ach.id);
+      return `
+        <li>
+          <span><span class="ach-name">${mine ? '🏴‍☠️ ' : '🔒 '}${ach.label}</span> — <span style="opacity:0.7;font-size:11px;">${ach.desc}</span></span>
+          <span class="ach-count">${c}名獲得</span>
+        </li>`;
+    }).join('');
+    container.innerHTML = `<ul class="achievement-list">${rows}</ul>`;
+  } catch (e) {
+    container.innerHTML = `<div class="error">⚠️ ${e.message}</div>`;
+  }
+}
+
+function renderNextTitleProgress(myRanking) {
+  const container = document.getElementById('next-title-container');
+  if (!myRanking) {
+    container.innerHTML = '';
+    return;
+  }
+  if (!myRanking.nextTitle) {
+    container.innerHTML = `<div class="next-title-progress cleared">
+      <span class="label">🏴‍☠️ 四皇達成・隠れミッション挑戦可能</span>
+    </div>`;
+    return;
+  }
+  container.innerHTML = `<div class="next-title-progress">
+    <span class="label">次称号 → <b style="color:#d4a647;">${myRanking.nextTitle}</b></span>
+    <span class="value">あと ${myRanking.nextApoNeeded} アポ</span>
+  </div>`;
+}
+
+function renderCompareBar(myRanking, lastMonthRanking) {
+  const container = document.getElementById('compare-container');
+  const my = getMyNickname();
+  if (!my || !myRanking) {
+    container.innerHTML = '';
+    return;
+  }
+  const last = (lastMonthRanking || []).find(r => r.nickname === my);
+  if (!last) {
+    container.innerHTML = `<div class="compare-bar"><span class="diff-same">📊 先月のデータなし</span></div>`;
+    return;
+  }
+  const diffA = myRanking.apoTotal - last.apoTotal;
+  const diffXP = myRanking.xpMonthly - last.xpMonthly;
+  const fmt = (n, unit) => n > 0
+    ? `<span class="diff-up">+${n} ${unit}</span>`
+    : n < 0 ? `<span class="diff-down">${n} ${unit}</span>`
+    : `<span class="diff-same">±0 ${unit}</span>`;
+  container.innerHTML = `<div class="compare-bar">
+    📊 <b>先月のあなた</b> との比較<br>
+    アポ：${fmt(diffA, '件')} ／ XP：${fmt(diffXP, 'XP')}
+  </div>`;
+}
+
+function lastMonthKey() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return monthKey(d);
+}
+
+async function fetchCompare(myCurrentRanking) {
+  if (!getMyNickname()) return;
+  try {
+    const res = await fetch(`${API_BASE}?path=ranking&month=${lastMonthKey()}`, { cache: 'no-store' });
+    const data = await res.json();
+    renderCompareBar(myCurrentRanking, data.ok ? data.ranking : []);
+  } catch (e) {
+    // silent fail
+  }
+}
+
+function renderEndowedBanner() {
+  const container = document.getElementById('endowed-banner-container');
+  const monthKey = (new Date()).toISOString().slice(0, 7);
+  const seenKey = 'logpose_endowed_seen_' + monthKey;
+  if (localStorage.getItem(seenKey) === '1') {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = `<div class="endowed-banner" onclick="dismissEndowed()">
+    🪙 <b>${monthKey} の航海資金 100 XP</b> を全船員に支給しました（タップで閉じる）
+  </div>`;
+}
+
+function dismissEndowed() {
+  const monthKey = (new Date()).toISOString().slice(0, 7);
+  localStorage.setItem('logpose_endowed_seen_' + monthKey, '1');
+  renderEndowedBanner();
 }
 
 function openModal(idx) {
@@ -421,17 +627,21 @@ function fetchAll() {
   fetchCompanyTotals();
   fetchInputStatus();
   fetchTrend();
+  fetchStreakLeaders();
+  fetchHiddenUnlocks();
 }
 
 function renderRanking(ranking) {
   const container = document.getElementById('ranking-container');
   if (!ranking || ranking.length === 0) {
     container.innerHTML = `<div class="loading">まだランキングがありません</div>`;
+    renderNextTitleProgress(null);
     return;
   }
   const my = getMyNickname();
+  const optedOut = isOptedOut();
   const rows = ranking.map(r => {
-    const isMe = my && r.nickname === my;
+    const isMe = !optedOut && my && r.nickname === my;
     return `
     <tr class="${isMe ? 'self' : ''}">
       <td class="rank">${r.rank}</td>
@@ -451,11 +661,24 @@ function renderRanking(ranking) {
       </table>
     </div>
   `;
+  // 自分のあだ名が ranking に存在するなら次称号 progress + 過去自分比較を更新
+  const myRanking = my ? ranking.find(r => r.nickname === my) : null;
+  if (isCurrentMonth()) {
+    renderNextTitleProgress(myRanking);
+    fetchCompare(myRanking);
+  } else {
+    renderNextTitleProgress(null);
+    document.getElementById('compare-container').innerHTML = '';
+  }
 }
 
+// Phase 1.5c: Day 1 起動シーケンス
+document.getElementById('opt-out-toggle').checked = isOptedOut();
+applyEndowedSilently();  // 月初なら裏で 100 XP 付与（冪等）
 renderTitles();
 renderMyNicknameBar();
 renderMonthSwitcher();
+renderEndowedBanner();
 fetchAll();
 
 if ('serviceWorker' in navigator) {
