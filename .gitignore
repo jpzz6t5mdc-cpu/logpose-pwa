@@ -1,0 +1,5 @@
+# Internal operations data (AI Company・public 公開禁止)
+reports/
+*.log
+*.jsonl
+.DS_Store
