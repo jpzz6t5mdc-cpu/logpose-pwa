@@ -210,6 +210,17 @@ body {
 .opt-out-bar .opt-out-desc { font-size: 11px; opacity: 0.7; display: block; margin-top: 3px; }
 .endowed-banner { background: linear-gradient(90deg, rgba(212, 166, 71, 0.18), rgba(212, 166, 71, 0.06)); border-left: 3px solid #d4a647; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; border-radius: 0 8px 8px 0; }
 .endowed-banner b { color: #d4a647; }
+/* Phase 1.5c Day 4: FAQ モーダル */
+.faq-btn { display: inline-block; margin-top: 10px; padding: 7px 16px; background: rgba(212, 166, 71, 0.18); border: 1px solid rgba(212, 166, 71, 0.45); color: #d4a647; border-radius: 16px; font-size: 12px; cursor: pointer; font-weight: 700; }
+.faq-btn:active { background: rgba(212, 166, 71, 0.3); }
+.faq-modal .modal-content { max-width: 480px; max-height: 80vh; overflow-y: auto; padding: 24px 20px; }
+.faq-category { margin-top: 18px; padding-top: 14px; border-top: 1px dashed rgba(212, 166, 71, 0.25); }
+.faq-category:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+.faq-category h4 { color: #d4a647; font-size: 13px; margin-bottom: 10px; letter-spacing: 1px; }
+.faq-q { font-weight: 700; font-size: 13.5px; color: #f5e9d3; margin-top: 12px; margin-bottom: 4px; }
+.faq-q::before { content: 'Q. '; color: #d4a647; }
+.faq-a { font-size: 12.5px; opacity: 0.85; line-height: 1.7; margin-left: 14px; }
+.faq-a::before { content: 'A. '; color: #d4a647; font-weight: 700; opacity: 0.95; }
 </style>
 </head>
 <body>
@@ -231,6 +242,7 @@ body {
   <div class="notice">
     📍 個人の XP / 称号は LINE で「<b>XP</b>」と送って確認<br>
     📍 ランキング表示名は「<b>あだ名 〇〇</b>」で変更
+    <button class="faq-btn" onclick="openHelpModal()">📖 詳しい使い方を見る</button>
   </div>
 
   <div class="section">
@@ -307,6 +319,14 @@ body {
     <h3 id="modal-title"></h3>
     <p id="modal-desc"></p>
     <div class="modal-detail" id="modal-detail"></div>
+  </div>
+</div>
+
+<div id="faq-modal" class="modal-overlay faq-modal" onclick="closeHelpModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeHelpModal()" aria-label="閉じる">×</button>
+    <h3>📖 LOG POSE の使い方</h3>
+    <div id="faq-body"></div>
   </div>
 </div>
 
@@ -500,6 +520,84 @@ function openModal(idx) {
 
 function closeModal() {
   document.getElementById('title-modal').classList.remove('show');
+}
+
+// Phase 1.5c Day 4: FAQ モーダル
+const FAQ = [
+  {
+    category: '🚀 はじめての方へ',
+    items: [
+      { q: 'まず何をすればいい？', a: 'LINE で「あだ名 〇〇」と送って表示名を登録。次に営業活動の結果を「P5 A2 K1」のように送ると XP が加算され、ランキング・称号に反映されます。' },
+      { q: 'PAK って何？', a: 'P=ピンポン（訪問件数）、A=アポ取得件数、K=契約件数。営業活動の3指標を1メッセージで記録できます。' },
+    ]
+  },
+  {
+    category: '⌨️ 入力方法',
+    items: [
+      { q: '入力フォーマットは？', a: '「P5 A2 K1」スペース区切り。大文字小文字どちらでも OK。「P3 A1」のように一部省略も可能。' },
+      { q: '間違えた時の取消方法は？', a: '「！」または「!」を LINE に送ると最新の入力1件が取り消されます。' },
+      { q: '今日の入力を確認したい', a: '「今日」と送ると本日の入力状況が返ります。「今週」「今月」も可能。' },
+      { q: 'XP状況を確認したい', a: '「XP」と送ると累計 XP・現在の称号・次の称号までの残りが返ります。' },
+    ]
+  },
+  {
+    category: '🎖️ 称号・XP の仕組み',
+    items: [
+      { q: 'XP はどう計算される？', a: 'P=1XP、A=10XP、K=100XP。アポ・契約ほど大きな加算。' },
+      { q: '称号は何で決まる？', a: '累計アポ件数で 9段階の称号が決まります。タル🛢️ → イーストブルー🌊 → レッドライン🏔️ → グランドライン⚓ → 新世界🌅 → 七武海⚔️ → 最悪の世代🏴‍☠️ → 四皇👑 → ???✨' },
+      { q: '次の称号まであと何件？', a: 'PWA の称号一覧の下部「次の称号まで」表示で確認できます。LINE「XP」コマンドでも返ります。' },
+      { q: 'タイトルをタップすると？', a: '各称号の意味（月収目安・教育人数目安）を確認できます。' },
+    ]
+  },
+  {
+    category: '🎁 隠し称号・サプライズ報酬',
+    items: [
+      { q: '隠し称号って何？', a: '通常の称号とは別に、特殊条件で獲得できる 10種類の称号があります。条件は獲得時に LINE 通知で発表（ネタバレ防止）。代表例：「夜の航海士」（22時以降の入力 5回）、「早起き船員」（6時前の入力 5回）、「皆勤の操舵手」（30日連続入力）など。' },
+      { q: '「仲間の祝福」通知が来た！', a: 'Variable Reward 機能です。誰かが PAK 入力した時に確率で他メンバーへ「○○が頑張ったよ」と通知が飛びます。サプライズ要素として設計。' },
+      { q: '「自己ベスト更新」通知は？', a: 'streak 連続日数があなたの過去最長を更新した時に発火します。' },
+    ]
+  },
+  {
+    category: '🙈 設定・プライバシー',
+    items: [
+      { q: 'ランキングから自分を目立たせないようにできる？', a: '「海賊番付」セクション内のチェックボックス「🙈 自分の名前を目立たせない」を ON にすると、自分の行のハイライト（金色背景・⚓マーク）が消えます。ランキング自体は表示されます。' },
+      { q: 'あだ名を変更したい', a: 'PWA ヘッダー直下の「あだ名」表示の右にある「変更」ボタンから変更可能。LINE で「あだ名 新しい名前」と送っても変更できます。' },
+      { q: 'データは誰が見られる？', a: '他メンバーには「あだ名」「称号」「アポ件数」「XP」のみがランキング上で公開されます。個別の数値（個人 LINE ID 等の個人情報）は本人と管理者のみ。' },
+    ]
+  },
+  {
+    category: '⚓ AI 航海日誌',
+    items: [
+      { q: 'AI 航海日誌って何？', a: '毎週月曜 6:30 に、あなた専用の週次航海ナラティブが LINE で自動配信されます。1週間の成果（XP増加・新称号獲得・隠し称号など）が航海風メタファーで届きます。' },
+      { q: '届かない場合は？', a: 'LINE の通知設定を確認してください。LOG POSE Bot からの通知が ON になっているか確認。' },
+    ]
+  },
+  {
+    category: '🛠️ トラブルシューティング',
+    items: [
+      { q: 'PAK 入力したのに反応がない', a: 'フォーマットを確認してください（例：P5 A2 K1）。「コマンドを認識できません」と返れば、形式が違う可能性。「ヘルプ」と送ると簡易ガイドが返ります。' },
+      { q: 'PWA が古い情報を表示している', a: '画面を上から下にスワイプして強制リロードしてください。それでも変わらない場合はホーム画面から PWA を削除して再追加。' },
+      { q: 'XP / 称号が反映されない', a: 'GAS の処理に数秒かかる場合があります。「🔄 全体更新」ボタンを押して再取得してください。' },
+    ]
+  }
+];
+
+function openHelpModal() {
+  const html = FAQ.map(cat => `
+    <div class="faq-category">
+      <h4>${cat.category}</h4>
+      ${cat.items.map(it => `
+        <div class="faq-q">${it.q}</div>
+        <div class="faq-a">${it.a}</div>
+      `).join('')}
+    </div>
+  `).join('');
+  document.getElementById('faq-body').innerHTML = html;
+  document.getElementById('faq-modal').classList.add('show');
+}
+
+function closeHelpModal() {
+  document.getElementById('faq-modal').classList.remove('show');
 }
 
 function getMyNickname() {
