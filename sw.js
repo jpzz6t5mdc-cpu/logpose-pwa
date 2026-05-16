@@ -1,5 +1,5 @@
-// LOG POSE Phase 1.5c Day 1 Service Worker
-const CACHE = 'logpose-phase1-v3';
+// LOG POSE Phase 1.5c Day 2 Service Worker
+const CACHE = 'logpose-phase1-v4';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
